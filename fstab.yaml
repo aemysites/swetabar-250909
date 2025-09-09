@@ -1,0 +1,5 @@
+mountpoints:
+  /:
+    url: "https://author-p141866-e1772357.adobeaemcloud.com/bin/franklin.delivery/aemysites/swetabar-250909/main"
+    type: "markup"
+    suffix: ".html"
