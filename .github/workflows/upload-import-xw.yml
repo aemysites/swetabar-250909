@@ -257,6 +257,7 @@ jobs:
           is_preview: 'true'
 
       - name: '[Check] Replicate content to AEM Preview'
+        continue-on-error: true
         if: ${{ steps.replicate-preview-step.outputs.error_message != '' }}
         uses: ./.github/actions/sta-status
         with:
