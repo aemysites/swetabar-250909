@@ -248,6 +248,7 @@ jobs:
 
       - name: Replicate content to AEM Preview
         id: replicate-preview-step
+        continue-on-error: true
         uses: ./.github/actions/sta-aem-publish
         with:
           access_token: ${{ steps.get-access-token-for-aem.outputs.access_token }}
@@ -270,7 +271,7 @@ jobs:
         with:
           callback_urls: ${{ github.event.inputs.aemy_callback_urls }}
           context: ${{ github.event.inputs.aemy_context }}
-          message: Content replicated to preview successfully. Now replicating content to AEM Publish... (Step 7 of ${{ env.total_steps }}). ${{ env.ACTION_URL }}
+          message: Preview step completed (with or without errors). Now replicating content to AEM Publish... (Step 7 of ${{ env.total_steps }}). ${{ env.ACTION_URL }}
           status_type: progress
           agent_name: upload-import-xw
 
