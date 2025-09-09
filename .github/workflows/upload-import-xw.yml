@@ -248,7 +248,6 @@ jobs:
 
       - name: Replicate content to AEM Preview
         id: replicate-preview-step
-        continue-on-error: true
         uses: ./.github/actions/sta-aem-publish
         with:
           access_token: ${{ steps.get-access-token-for-aem.outputs.access_token }}
