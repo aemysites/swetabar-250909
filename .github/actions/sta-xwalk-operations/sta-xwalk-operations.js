@@ -20,7 +20,7 @@ import archiver from 'archiver';
 import {
   doExtractContentPaths,
   getFilterPaths,
-  replaceBoilerplatePaths,
+  processContentXmlFiles,
   BOILERPLATE_PATTERN,
 } from './xwalk-content.js';
 
@@ -255,101 +255,6 @@ function convertBoilerplatePaths(filterXmlContent, repoName) {
   );
 
   return modifiedContent;
-}
-
-/**
- * Get relative path and prefix for logging based on file location
- * @param {string} filePath - Full file path
- * @param {string} jcrRootPath - Path to jcr_root directory
- * @param {string} metaInfPath - Path to META-INF directory
- * @returns {Object} - Object with relativePath and pathPrefix
- */
-function getFilePathInfo(filePath, jcrRootPath, metaInfPath) {
-  const isJcrRoot = filePath.includes(`${path.sep}jcr_root${path.sep}`);
-  const relativePath = isJcrRoot
-    ? path.relative(jcrRootPath, filePath)
-    : path.relative(metaInfPath, filePath);
-  const pathPrefix = isJcrRoot ? 'jcr_root/' : 'META-INF/';
-  return { relativePath, pathPrefix, isJcrRoot };
-}
-
-/**
- * Process all XML files recursively and replace boilerplate paths.
- * This function is only called for boilerplate packages during conversion.
- * @param {string} jcrRootPath - Path to jcr_root directory
- * @param {string} metaInfPath - Path to META-INF directory
- * @param {string} repoName - Repository name to use for replacement
- */
-export function processContentXmlFiles(jcrRootPath, metaInfPath, repoName) {
-  core.info('Processing XML files in jcr_root and META-INF for path replacement');
-
-  /**
-   * Recursively find all XML files that need processing
-   * @param {string} dirPath - Directory to search
-   * @param {boolean} isMetaInf - Whether this is the META-INF directory
-   * @returns {string[]} - Array of XML file paths
-   */
-  function findXmlFiles(dirPath, isMetaInf = false) {
-    const xmlFiles = [];
-
-    if (!fs.existsSync(dirPath)) {
-      return xmlFiles;
-    }
-
-    const items = fs.readdirSync(dirPath);
-
-    for (const item of items) {
-      const itemPath = path.join(dirPath, item);
-      const stat = fs.statSync(itemPath);
-
-      if (stat.isDirectory()) {
-        // Recursively search subdirectories
-        xmlFiles.push(...findXmlFiles(itemPath, isMetaInf));
-      } else if (isMetaInf && item.endsWith('.content.xml')) {
-        // In META-INF, process only .content.xml files
-        xmlFiles.push(itemPath);
-      } else if (!isMetaInf && item === '.content.xml') {
-        // In jcr_root, only process .content.xml files
-        xmlFiles.push(itemPath);
-      }
-    }
-
-    return xmlFiles;
-  }
-
-  // Find XML files in both directories
-  const jcrRootXmlFiles = findXmlFiles(jcrRootPath, false);
-  const metaInfXmlFiles = findXmlFiles(metaInfPath, true);
-  const allXmlFiles = [...jcrRootXmlFiles, ...metaInfXmlFiles];
-
-  core.info(`Found ${jcrRootXmlFiles.length} .content.xml files in jcr_root and ${metaInfXmlFiles.length} XML files in META-INF to process`);
-
-  let totalReplacements = 0;
-
-  for (const filePath of allXmlFiles) {
-    try {
-      // Read file content for processing
-      const originalContent = fs.readFileSync(filePath, 'utf8');
-
-      // Process the file content
-      const result = replaceBoilerplatePaths(originalContent, repoName);
-      const { modifiedContent, modificationCount } = result;
-
-      // Write back the modified content if changes were made
-      if (modificationCount > 0) {
-        fs.writeFileSync(filePath, modifiedContent, 'utf8');
-        totalReplacements += modificationCount;
-
-        const { relativePath, pathPrefix } = getFilePathInfo(filePath, jcrRootPath, metaInfPath);
-        core.info(`  ✅ Updated ${pathPrefix}${relativePath}: ${modificationCount} modifications`);
-      }
-    } catch (error) {
-      const { relativePath, pathPrefix } = getFilePathInfo(filePath, jcrRootPath, metaInfPath);
-      core.warning(`  ⚠️ Failed to process ${pathPrefix}${relativePath}: ${error.message}`);
-    }
-  }
-
-  core.info(`✅ Completed processing XML files: ${totalReplacements} total path replacements made`);
 }
 
 /**
