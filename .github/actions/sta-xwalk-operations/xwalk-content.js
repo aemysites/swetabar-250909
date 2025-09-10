@@ -136,7 +136,7 @@ export function replaceBoilerplatePaths(content, repoName) {
  * @returns {Object} - Object with relativePath and pathPrefix
  */
 export function getFilePathInfo(filePath, jcrRootPath, metaInfPath) {
-  const isJcrRoot = filePath.includes(`${path.sep}jcr_root${path.sep}`);
+  const isJcrRoot = filePath.startsWith(jcrRootPath);
   const relativePath = isJcrRoot
     ? path.relative(jcrRootPath, filePath)
     : path.relative(metaInfPath, filePath);
