@@ -17,7 +17,12 @@ import path from 'path';
 import unzipper from 'unzipper';
 // eslint-disable-next-line import/no-unresolved, import/no-extraneous-dependencies
 import archiver from 'archiver';
-import { doExtractContentPaths, getFilterPaths } from './xwalk-content.js';
+import {
+  doExtractContentPaths,
+  getFilterPaths,
+  replaceBoilerplatePaths,
+  BOILERPLATE_PATTERN,
+} from './xwalk-content.js';
 
 export const XWALK_OPERATIONS = Object.freeze({
   UPLOAD: 'upload',
@@ -226,7 +231,7 @@ function convertBoilerplatePaths(filterXmlContent, repoName) {
   let modifiedContent = filterXmlContent;
 
   // Replace the paths in root attributes and any text content
-  modifiedContent = modifiedContent.replace(/sta-xwalk-boilerplate/g, repoName);
+  modifiedContent = modifiedContent.replace(BOILERPLATE_PATTERN, repoName);
 
   // Also handle the case where paths might be in different formats or escaped
   // This regex looks for paths that contain 'sta-xwalk-boilerplate' and replaces them
@@ -235,7 +240,7 @@ function convertBoilerplatePaths(filterXmlContent, repoName) {
     (match, originalPath) => {
       // Convert ALL paths that contain 'sta-xwalk-boilerplate' to use the repo name
       if (originalPath.includes('sta-xwalk-boilerplate')) {
-        const newPath = originalPath.replace(/sta-xwalk-boilerplate/g, repoName);
+        const newPath = originalPath.replace(BOILERPLATE_PATTERN, repoName);
         core.info(`  Converted path: ${originalPath} -> ${newPath}`);
         return `root="${newPath}"`;
       }
@@ -269,35 +274,13 @@ function getFilePathInfo(filePath, jcrRootPath, metaInfPath) {
 }
 
 /**
- * Replace boilerplate paths in content with repository-specific paths
- * @param {string} content - Original file content
- * @param {string} repoName - Repository name for replacement
- * @returns {Object} - Object with modifiedContent and replacementCount
- */
-function replaceBoilerplatePaths(content, repoName) {
-  // Simple replacement of all occurrences of sta-xwalk-boilerplate with repo name
-  const boilerplatePattern = /sta-xwalk-boilerplate/g;
-
-  // Count matches before replacement for logging
-  const matches = content.match(boilerplatePattern);
-  if (!matches) {
-    return { modifiedContent: content, replacementCount: 0 };
-  }
-
-  const replacementCount = matches.length;
-  const modifiedContent = content.replace(boilerplatePattern, repoName);
-
-  return { modifiedContent, replacementCount };
-}
-
-/**
  * Process all XML files recursively and replace boilerplate paths.
  * This function is only called for boilerplate packages during conversion.
  * @param {string} jcrRootPath - Path to jcr_root directory
  * @param {string} metaInfPath - Path to META-INF directory
  * @param {string} repoName - Repository name to use for replacement
  */
-function processContentXmlFiles(jcrRootPath, metaInfPath, repoName) {
+export function processContentXmlFiles(jcrRootPath, metaInfPath, repoName) {
   core.info('Processing XML files in jcr_root and META-INF for path replacement');
 
   /**
@@ -350,15 +333,15 @@ function processContentXmlFiles(jcrRootPath, metaInfPath, repoName) {
 
       // Process the file content
       const result = replaceBoilerplatePaths(originalContent, repoName);
-      const { modifiedContent, replacementCount } = result;
+      const { modifiedContent, modificationCount } = result;
 
       // Write back the modified content if changes were made
-      if (replacementCount > 0) {
+      if (modificationCount > 0) {
         fs.writeFileSync(filePath, modifiedContent, 'utf8');
-        totalReplacements += replacementCount;
+        totalReplacements += modificationCount;
 
         const { relativePath, pathPrefix } = getFilePathInfo(filePath, jcrRootPath, metaInfPath);
-        core.info(`  ✅ Updated ${pathPrefix}${relativePath}: ${replacementCount} replacements`);
+        core.info(`  ✅ Updated ${pathPrefix}${relativePath}: ${modificationCount} modifications`);
       }
     } catch (error) {
       const { relativePath, pathPrefix } = getFilePathInfo(filePath, jcrRootPath, metaInfPath);
@@ -650,7 +633,7 @@ export async function run() {
         const convertedPagePaths = result.pagePaths.map((originalPath) => {
           // Convert ALL paths that contain 'sta-xwalk-boilerplate' to use the repo name
           if (originalPath.includes('sta-xwalk-boilerplate')) {
-            return originalPath.replace(/sta-xwalk-boilerplate/g, repoName);
+            return originalPath.replace(BOILERPLATE_PATTERN, repoName);
           }
           return originalPath; // Keep original if not a boilerplate path
         });
