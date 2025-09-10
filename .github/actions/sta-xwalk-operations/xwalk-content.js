@@ -105,3 +105,25 @@ export async function doExtractContentPaths(zipContentsPath) {
     }
   }
 }
+
+export const BOILERPLATE_PATTERN = /sta-xwalk-boilerplate/g;
+
+/**
+ * Replace boilerplate paths in content with repository-specific paths
+ * @param {string} content - Original file content
+ * @param {string} repoName - Repository name for replacement
+ * @returns {Object} - Object with modifiedContent and modificationCount
+ */
+export function replaceBoilerplatePaths(content, repoName) {
+  // Simple replacement of all occurrences of sta-xwalk-boilerplate with repo name
+  // Count matches before replacement for logging
+  const matches = content.match(BOILERPLATE_PATTERN);
+  if (!matches) {
+    return { modifiedContent: content, modificationCount: 0 };
+  }
+
+  const modificationCount = matches.length;
+  const modifiedContent = content.replace(BOILERPLATE_PATTERN, repoName);
+
+  return { modifiedContent, modificationCount };
+}
