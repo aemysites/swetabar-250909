@@ -244,14 +244,8 @@ function convertBoilerplatePaths(filterXmlContent, repoName) {
         core.info(`  Converted path: ${originalPath} -> ${newPath}`);
         return `root="${newPath}"`;
       }
-      return match; // Keep original if something went wrong
+      return match;
     },
-  );
-
-  // Additional pattern to catch any remaining instances that might be formatted differently
-  modifiedContent = modifiedContent.replace(
-    /([^"\w-])sta-xwalk-boilerplate([^"\w-])/g,
-    `$1${repoName}$2`,
   );
 
   return modifiedContent;
@@ -358,10 +352,10 @@ async function createPackageFromExtractedContent(zipContentsPath, repoName) {
   }
 
   const originalFilterContent = fs.readFileSync(filterXmlPath, 'utf8');
-  core.info(`📄 Original filter.xml content:\n${originalFilterContent}`);
+  core.debug(`📄 Original filter.xml content:\n${originalFilterContent}`);
 
   const modifiedFilterContent = convertBoilerplatePaths(originalFilterContent, repoName);
-  core.info(`📄 Modified filter.xml content:\n${modifiedFilterContent}`);
+  core.debug(`📄 Modified filter.xml content:\n${modifiedFilterContent}`);
 
   // Write the modified filter.xml back
   fs.writeFileSync(filterXmlPath, modifiedFilterContent, 'utf8');

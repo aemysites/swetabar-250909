@@ -133,7 +133,7 @@ export function replaceBoilerplatePaths(content, repoName) {
  * @param {string} filePath - Full file path
  * @param {string} jcrRootPath - Path to jcr_root directory
  * @param {string} metaInfPath - Path to META-INF directory
- * @returns {Object} - Object with relativePath and pathPrefix
+ * @returns {Object} - Object with relativePath, pathPrefix, and isJcrRoot
  */
 export function getFilePathInfo(filePath, jcrRootPath, metaInfPath) {
   const isJcrRoot = filePath.startsWith(jcrRootPath);
@@ -194,24 +194,25 @@ export function processContentXmlFiles(jcrRootPath, metaInfPath, repoName) {
   let totalReplacements = 0;
 
   for (const filePath of allXmlFiles) {
+    const { relativePath, pathPrefix } = getFilePathInfo(filePath, jcrRootPath, metaInfPath);
     try {
       // Read file content for processing
       const originalContent = fs.readFileSync(filePath, 'utf8');
 
       // Process the file content
-      const result = replaceBoilerplatePaths(originalContent, repoName);
-      const { modifiedContent, modificationCount } = result;
+      const { modifiedContent, modificationCount } = replaceBoilerplatePaths(
+        originalContent,
+        repoName,
+      );
 
       // Write back the modified content if changes were made
       if (modificationCount > 0) {
         fs.writeFileSync(filePath, modifiedContent, 'utf8');
         totalReplacements += modificationCount;
 
-        const { relativePath, pathPrefix } = getFilePathInfo(filePath, jcrRootPath, metaInfPath);
         core.info(`  ✅ Updated ${pathPrefix}${relativePath}: ${modificationCount} modifications`);
       }
     } catch (error) {
-      const { relativePath, pathPrefix } = getFilePathInfo(filePath, jcrRootPath, metaInfPath);
       core.warning(`  ⚠️ Failed to process ${pathPrefix}${relativePath}: ${error.message}`);
     }
   }
