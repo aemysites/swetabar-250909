@@ -133,7 +133,10 @@ export function replaceBoilerplatePaths(content, repoName) {
  * @param {string} filePath - Full file path
  * @param {string} jcrRootPath - Path to jcr_root directory
  * @param {string} metaInfPath - Path to META-INF directory
- * @returns {Object} - Object with relativePath, pathPrefix, and isJcrRoot
+ * @returns {object} with the following properties:
+ *   - relativePath: {string} - The relative path from either jcr_root or META-INF directory
+ *   - pathPrefix: {string} - The prefix for logging ('jcr_root/' or 'META-INF/')
+ *   - isJcrRoot: {boolean} - Whether the file is located under the jcr_root directory
  */
 export function getFilePathInfo(filePath, jcrRootPath, metaInfPath) {
   const isJcrRoot = filePath.startsWith(jcrRootPath);
